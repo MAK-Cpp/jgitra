@@ -4,7 +4,7 @@ vars:
   APP: jgitra
   MODULE:
     sh: go list -m
-  VERSION: v0.0.0
+  VERSION: v0.1.0
   LDFLAGS: >-
     -X {{.MODULE}}/internal/config.Version={{.VERSION}}
     -X {{.MODULE}}/internal/config.App={{.APP}}
@@ -42,6 +42,7 @@ tasks:
       - go.sum
     generates:
       - "{{.APP_BIN}}"
+    silent: true
 
   run:
     desc: Build and run {{.APP}}
@@ -49,6 +50,13 @@ tasks:
       - build
     cmds:
       - "{{.APP_BIN}} {{.CLI_ARGS}}"
+    silent: true
+
+  run:no-compile:
+    desc: Run {{.APP}} without compiling to binary
+    cmds:
+      - go run {{.CMD}}/{{.APP}} {{.CLI_ARGS}}
+    silent: true
 
   clean:
     desc: Clean output from build
@@ -59,3 +67,4 @@ tasks:
         -ldflags="{{.LDFLAGS}}" 
         -tags clean
         {{.CMD}}/tools/clean
+    silent: true
