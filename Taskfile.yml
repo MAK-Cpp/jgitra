@@ -1,0 +1,61 @@
+version: '3'
+
+vars:
+  APP: jgitra
+  MODULE:
+    sh: go list -m
+  VERSION: v0.0.0
+  LDFLAGS: >-
+    -X {{.MODULE}}/internal/config.Version={{.VERSION}}
+    -X {{.MODULE}}/internal/config.App={{.APP}}
+  GOEXE:
+    sh: go env GOEXE
+  APP_BIN: "{{.ROOT_DIR}}/bin/{{.APP}}{{.GOEXE}}"
+  CMD: "{{.ROOT_DIR}}/cmd"
+  # tools versions
+  GOLANGCI_LINT_VERSION: v2.12.2
+
+tasks:
+  install:golangci-lint:
+    desc: Install golangci-lint
+    env:
+      GOBIN: "{{.ROOT_DIR}}/bin"
+    cmds:
+      - >
+        go install 
+        github.com/golangci/golangci-lint/v2/cmd/golangci-lint@{{.GOLANGCI_LINT_VERSION}}
+    status:
+      - bin/golangci-lint --version
+
+  build:
+    desc: Build {{.APP}}
+    cmds:
+      - >
+        go build
+        -ldflags="{{.LDFLAGS}}"
+        -o {{.APP_BIN}}
+        {{.CMD}}/{{.APP}}
+    sources:
+      - cmd/**/*.go
+      - internal/**/*.go
+      - go.mod
+      - go.sum
+    generates:
+      - "{{.APP_BIN}}"
+
+  run:
+    desc: Build and run {{.APP}}
+    deps:
+      - build
+    cmds:
+      - "{{.APP_BIN}} {{.CLI_ARGS}}"
+
+  clean:
+    desc: Clean output from build
+    cmds:
+      - go clean
+      - >
+        go run 
+        -ldflags="{{.LDFLAGS}}" 
+        -tags clean
+        {{.CMD}}/tools/clean
