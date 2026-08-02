@@ -81,3 +81,9 @@ tasks:
         -tags clean
         {{.CMD}}/tools/clean
     silent: true
+
+  git:tag:
+    desc: Create versioning tag on commit
+    cmds:
+      - git tag {{.VERSION}}
+    silent: true
