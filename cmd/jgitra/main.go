@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"jgitra/internal/cli"
@@ -9,7 +10,21 @@ import (
 	"github.com/alecthomas/kong"
 )
 
+type VersionFlag bool
+
+func (v VersionFlag) BeforeReset(app *kong.Kong) error {
+	fmt.Printf("Version %s\n", config.Version)
+	app.Exit(0)
+	return nil
+}
+
+type Globals struct {
+	Version VersionFlag `name:"version" short:"v" help:"Show version"`
+}
+
 type CLI struct {
+	Globals
+
 	Validate cli.ValidateCmd `cmd:"" help:"Validate configuration."`
 }
 

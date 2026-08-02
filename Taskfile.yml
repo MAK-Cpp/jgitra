@@ -4,7 +4,7 @@ vars:
   APP: jgitra
   MODULE:
     sh: go list -m
-  VERSION: v0.1.0
+  VERSION: v0.2.0
   LDFLAGS: >-
     -X {{.MODULE}}/internal/config.Version={{.VERSION}}
     -X {{.MODULE}}/internal/config.App={{.APP}}
@@ -26,6 +26,15 @@ tasks:
         github.com/golangci/golangci-lint/v2/cmd/golangci-lint@{{.GOLANGCI_LINT_VERSION}}
     status:
       - bin/golangci-lint --version
+    silent: true
+
+  lint:
+    desc: Check code for vulnerabilities and errors
+    deps:
+      - install:golangci-lint
+    cmds:
+      - bin/golangci-lint run
+    silent: true
 
   build:
     desc: Build {{.APP}}
@@ -55,7 +64,11 @@ tasks:
   run:no-compile:
     desc: Run {{.APP}} without compiling to binary
     cmds:
-      - go run {{.CMD}}/{{.APP}} {{.CLI_ARGS}}
+      - >
+        go run
+        -ldflags="{{.LDFLAGS}}"
+        {{.CMD}}/{{.APP}}
+        {{.CLI_ARGS}}
     silent: true
 
   clean:
