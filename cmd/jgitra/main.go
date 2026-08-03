@@ -19,7 +19,7 @@ func (v VersionFlag) BeforeReset(app *kong.Kong) error {
 }
 
 type Globals struct {
-	Version VersionFlag `name:"version" short:"v" help:"Show version"`
+	Version VersionFlag `name:"version" short:"v" help:"Show version."`
 }
 
 type CLI struct {

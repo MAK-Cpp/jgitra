@@ -11,7 +11,8 @@ import (
 )
 
 type Config struct {
-	Jira struct {
+	filepath string
+	Jira     struct {
 		BaseURL   string `yaml:"base_url"`
 		UserEmail string `yaml:"user_email"`
 		APIToken  string `yaml:"api_token"`
@@ -23,19 +24,15 @@ func Load() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	configFile, err := getConfigFile(configDir)
-	if err != nil {
-		return nil, err
-	}
-	defer configFile.Close()
-	config, err := readConfig(configFile)
+	configFilepath := filepath.Join(configDir, "config.yml")
+	config, err := readConfig(configFilepath)
 	if err != nil {
 		if errors.Is(err, io.EOF) {
-			config = &Config{}
-			if err = initConfig(config); err != nil {
+			config, err = newConfig(configFilepath)
+			if err != nil {
 				return nil, err
 			}
-			if err = saveConfig(configFile, config); err != nil {
+			if err = config.Save(); err != nil {
 				return nil, err
 			}
 			return config, nil
@@ -67,30 +64,40 @@ func getLocalConfigDir() (string, error) {
 	return configDir, nil
 }
 
-func getConfigFile(configDir string) (*os.File, error) {
-	configFile := filepath.Join(configDir, "config.yml")
-	file, err := os.OpenFile(configFile, os.O_RDWR|os.O_CREATE, 0600)
+func readConfig(filepath string) (*Config, error) {
+	file, err := os.OpenFile(filepath, os.O_RDONLY|os.O_CREATE, 0600)
 	if err != nil {
 		return nil, err
 	}
-	return file, nil
-}
-
-func readConfig(configFile *os.File) (*Config, error) {
-	conf := &Config{}
-	yamlDecoder := yaml.NewDecoder(configFile)
-	if err := yamlDecoder.Decode(conf); err != nil {
+	defer file.Close()
+	conf := &Config{
+		filepath: filepath,
+	}
+	yamlDecoder := yaml.NewDecoder(file)
+	if err = yamlDecoder.Decode(conf); err != nil {
 		return nil, err
 	}
 	return conf, nil
 }
 
-func saveConfig(configFile *os.File, config *Config) error {
-	yamlEncoder := yaml.NewEncoder(configFile)
-	defer yamlEncoder.Close()
-	yamlEncoder.SetIndent(2)
-	if err := yamlEncoder.Encode(config); err != nil {
+func newConfig(filepath string) (*Config, error) {
+	config := &Config{
+		filepath: filepath,
+	}
+	if err := initConfig(config); err != nil {
+		return nil, err
+	}
+	return config, nil
+}
+
+func (c *Config) Save() error {
+	file, err := os.OpenFile(c.filepath, os.O_WRONLY|os.O_CREATE, 0600)
+	if err != nil {
 		return err
 	}
-	return nil
+	defer file.Close()
+	yamlEncoder := yaml.NewEncoder(file)
+	defer yamlEncoder.Close()
+	yamlEncoder.SetIndent(2)
+	return yamlEncoder.Encode(c)
 }
