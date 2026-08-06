@@ -29,7 +29,14 @@ type CLI struct {
 	Validate cli.ValidateCmd `cmd:"" help:"Validate configuration."`
 }
 
+func validateGit() error {
+	return nil
+}
+
 func main() {
+	if err := validateGit(); err != nil {
+		log.Fatal("git validation error: ", err)
+	}
 	c, err := config.Load()
 	if err != nil {
 		log.Fatal("error loading config: ", err)
@@ -42,6 +49,8 @@ func main() {
 		kong.ConfigureHelp(kong.HelpOptions{
 			Tree: true,
 		}),
+		kong.Bind(c),
+		kong.Bind(jira),
 	)
-	ctx.FatalIfErrorf(ctx.Run(jira))
+	ctx.FatalIfErrorf(ctx.Run())
 }

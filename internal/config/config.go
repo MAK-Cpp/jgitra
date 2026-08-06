@@ -27,7 +27,7 @@ func Load() (*Config, error) {
 	configFilepath := filepath.Join(configDir, "config.yml")
 	config, err := readConfig(configFilepath)
 	if err != nil {
-		if errors.Is(err, io.EOF) {
+		if errors.Is(err, os.ErrNotExist) || errors.Is(err, io.EOF) {
 			config, err = newConfig(configFilepath)
 			if err != nil {
 				return nil, err
@@ -65,7 +65,7 @@ func getLocalConfigDir() (string, error) {
 }
 
 func readConfig(filepath string) (*Config, error) {
-	file, err := os.OpenFile(filepath, os.O_RDONLY|os.O_CREATE, 0600)
+	file, err := os.OpenFile(filepath, os.O_RDONLY, 0600)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func newConfig(filepath string) (*Config, error) {
 	config := &Config{
 		filepath: filepath,
 	}
-	if err := initConfig(config); err != nil {
+	if err := config.Init(); err != nil {
 		return nil, err
 	}
 	return config, nil

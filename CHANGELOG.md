@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- `validate` TUI
+
 ### Fixed
 
 - Загрузка и сохранение конфига при старте
