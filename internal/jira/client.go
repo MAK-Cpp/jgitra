@@ -1,4 +1,4 @@
-package client
+package jira
 
 import (
 	"encoding/json"
@@ -19,14 +19,14 @@ var (
 	WrongPathError    = errors.New("jira API was not found: check the Jira URL")
 )
 
-type JiraClient struct {
+type Client struct {
 	config *config.Config
 	api    string
 	client *http.Client
 }
 
-func NewJiraClient(config *config.Config) *JiraClient {
-	return &JiraClient{
+func NewClient(config *config.Config) *Client {
+	return &Client{
 		config: config,
 		api:    config.Jira.BaseURL + "/rest/api/3",
 		client: &http.Client{
@@ -35,7 +35,7 @@ func NewJiraClient(config *config.Config) *JiraClient {
 	}
 }
 
-func (c *JiraClient) execute(method string, path string, body io.Reader, v any) error {
+func (c *Client) execute(method string, path string, body io.Reader, v any) error {
 	fullPath, err := url.JoinPath(c.api, path)
 	if err != nil {
 		return err
@@ -80,7 +80,7 @@ func (c *JiraClient) execute(method string, path string, body io.Reader, v any) 
 	return nil
 }
 
-func (c *JiraClient) get(path string, v any) error {
+func (c *Client) get(path string, v any) error {
 	return c.execute(http.MethodGet, path, nil, v)
 }
 
@@ -91,10 +91,25 @@ type UserResponse struct {
 	Active       bool   `json:"active"`
 }
 
-func (c *JiraClient) Myself() (*UserResponse, error) {
+func (c *Client) Myself() (UserResponse, error) {
 	var user UserResponse
 	if err := c.get("/myself", &user); err != nil {
+		return UserResponse{}, err
+	}
+	return user, nil
+}
+
+type ProjectsResponse struct {
+	Projects []struct {
+		Key  string `json:"key"`
+		Name string `json:"name"`
+	} `json:"values"`
+}
+
+func (c *Client) ProjectSearch() (*ProjectsResponse, error) {
+	var projects ProjectsResponse
+	if err := c.get("/project/search", &projects); err != nil {
 		return nil, err
 	}
-	return &user, nil
+	return &projects, nil
 }

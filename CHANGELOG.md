@@ -5,6 +5,7 @@
 ### Added
 
 - `validate` TUI
+- init TUI
 
 ### Fixed
 

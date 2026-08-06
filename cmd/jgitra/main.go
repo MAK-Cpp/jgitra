@@ -5,8 +5,8 @@ import (
 	"log"
 
 	"jgitra/internal/cli"
-	"jgitra/internal/client"
 	"jgitra/internal/config"
+	"jgitra/internal/jira"
 
 	"github.com/alecthomas/kong"
 )
@@ -41,7 +41,7 @@ func main() {
 	if err != nil {
 		log.Fatal("error loading config: ", err)
 	}
-	jira := client.NewJiraClient(c)
+	client := jira.NewClient(c)
 	ctx := kong.Parse(&CLI{},
 		kong.Name(config.App),
 		kong.Description("jira + git tool"),
@@ -50,7 +50,7 @@ func main() {
 			Tree: true,
 		}),
 		kong.Bind(c),
-		kong.Bind(jira),
+		kong.Bind(client),
 	)
 	ctx.FatalIfErrorf(ctx.Run())
 }
