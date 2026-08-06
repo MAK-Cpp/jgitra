@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"jgitra/internal/jira"
+	"jgitra/internal/tui/message"
 
 	"charm.land/bubbles/v2/spinner"
 	tea "charm.land/bubbletea/v2"
@@ -16,15 +17,11 @@ type respUserMsg struct {
 	user jira.UserResponse
 }
 
-type respErrorMsg struct {
-	error error
-}
-
 func makeRequest(jira *jira.Client) tea.Cmd {
 	return func() tea.Msg {
 		u, err := jira.Myself()
 		if err != nil {
-			return respErrorMsg{err}
+			return message.ResponseError{Error: err}
 		}
 		return respUserMsg{u}
 	}
@@ -70,9 +67,9 @@ func (m validateModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.user = msg.user
 		return m, tea.Quit
 
-	case respErrorMsg:
+	case message.ResponseError:
 		m.loading = false
-		m.err = msg.error
+		m.err = msg.Error
 		return m, tea.Quit
 	}
 

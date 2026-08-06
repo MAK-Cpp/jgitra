@@ -4,6 +4,7 @@
 
 ### Added
 
+- команда `project`
 - `validate` TUI
 - init TUI
 

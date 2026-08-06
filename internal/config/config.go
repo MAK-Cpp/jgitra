@@ -16,6 +16,7 @@ type Config struct {
 		BaseURL   string `yaml:"base_url"`
 		UserEmail string `yaml:"user_email"`
 		APIToken  string `yaml:"api_token"`
+		Project   string `yaml:"project"`
 	} `yaml:"jira"`
 }
 

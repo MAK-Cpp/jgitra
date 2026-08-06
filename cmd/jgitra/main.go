@@ -27,6 +27,7 @@ type CLI struct {
 	Globals
 
 	Validate cli.ValidateCmd `cmd:"" help:"Validate configuration."`
+	Project  cli.ProjectCmd  `cmd:"" help:"Project configuration."`
 }
 
 func validateGit() error {

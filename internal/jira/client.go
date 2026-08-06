@@ -106,10 +106,10 @@ type ProjectsResponse struct {
 	} `json:"values"`
 }
 
-func (c *Client) ProjectSearch() (*ProjectsResponse, error) {
+func (c *Client) ProjectSearch() (ProjectsResponse, error) {
 	var projects ProjectsResponse
 	if err := c.get("/project/search", &projects); err != nil {
-		return nil, err
+		return ProjectsResponse{}, err
 	}
-	return &projects, nil
+	return projects, nil
 }
