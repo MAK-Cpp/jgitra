@@ -6,6 +6,7 @@ import (
 
 	"jgitra/internal/cli"
 	"jgitra/internal/config"
+	"jgitra/internal/jira"
 
 	"github.com/alecthomas/kong"
 )
@@ -19,24 +20,38 @@ func (v VersionFlag) BeforeReset(app *kong.Kong) error {
 }
 
 type Globals struct {
-	Version VersionFlag `name:"version" short:"v" help:"Show version"`
+	Version VersionFlag `name:"version" short:"v" help:"Show version."`
 }
 
 type CLI struct {
 	Globals
 
 	Validate cli.ValidateCmd `cmd:"" help:"Validate configuration."`
+	Project  cli.ProjectCmd  `cmd:"" help:"Project configuration."`
+}
+
+func validateGit() error {
+	return nil
 }
 
 func main() {
+	if err := validateGit(); err != nil {
+		log.Fatal("git validation error: ", err)
+	}
 	c, err := config.Load()
 	if err != nil {
 		log.Fatal("error loading config: ", err)
 	}
+	client := jira.NewClient(c)
 	ctx := kong.Parse(&CLI{},
 		kong.Name(config.App),
 		kong.Description("jira + git tool"),
 		kong.UsageOnError(),
+		kong.ConfigureHelp(kong.HelpOptions{
+			Tree: true,
+		}),
+		kong.Bind(c),
+		kong.Bind(client),
 	)
-	ctx.FatalIfErrorf(ctx.Run(c))
+	ctx.FatalIfErrorf(ctx.Run())
 }
