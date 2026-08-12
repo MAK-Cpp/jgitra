@@ -4,7 +4,7 @@ vars:
   APP: jgitra
   MODULE:
     sh: go list -m
-  VERSION: v0.2.1
+  VERSION: v0.3.0
   LDFLAGS: >-
     -X {{.MODULE}}/internal/config.Version={{.VERSION}}
     -X {{.MODULE}}/internal/config.App={{.APP}}
