@@ -35,23 +35,32 @@ func validateGit() error {
 }
 
 func main() {
+	// validating system
 	if err := validateGit(); err != nil {
 		log.Fatal("git validation error: ", err)
 	}
-	c, err := config.Load()
-	if err != nil {
-		log.Fatal("error loading config: ", err)
-	}
-	client := jira.NewClient(c)
-	ctx := kong.Parse(&CLI{},
+
+	// parsing cli
+	kCtx := kong.Parse(&CLI{},
 		kong.Name(config.App),
 		kong.Description("jira + git tool"),
 		kong.UsageOnError(),
 		kong.ConfigureHelp(kong.HelpOptions{
 			Tree: true,
 		}),
-		kong.Bind(c),
-		kong.Bind(client),
 	)
-	ctx.FatalIfErrorf(ctx.Run())
+
+	// loading config
+	c, err := config.Load()
+	if err != nil {
+		log.Fatal("error loading config: ", err)
+	}
+	kCtx.Bind(c)
+
+	// jira initialisation
+	jClient := jira.NewClient(c)
+	kCtx.Bind(jClient)
+
+	// run
+	kCtx.FatalIfErrorf(kCtx.Run())
 }

@@ -35,17 +35,24 @@ func NewClient(config *config.Config) *Client {
 	}
 }
 
-func (c *Client) execute(method string, path string, body io.Reader, v any) error {
+func (c *Client) execute(method string, path string, pathVars map[string]string, body io.Reader, v any) error {
 	fullPath, err := url.JoinPath(c.api, path)
 	if err != nil {
 		return err
 	}
+
 	req, err := http.NewRequest(method, fullPath, body)
 	if err != nil {
 		return err
 	}
+
+	for k, v := range pathVars {
+		req.SetPathValue(k, v)
+	}
+
 	req.Header.Add("Accept", "application/json")
 	req.SetBasicAuth(c.config.Jira.UserEmail, c.config.Jira.APIToken)
+
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return err
@@ -80,8 +87,8 @@ func (c *Client) execute(method string, path string, body io.Reader, v any) erro
 	return nil
 }
 
-func (c *Client) get(path string, v any) error {
-	return c.execute(http.MethodGet, path, nil, v)
+func (c *Client) get(path string, pathVars map[string]string, v any) error {
+	return c.execute(http.MethodGet, path, pathVars, nil, v)
 }
 
 type UserResponse struct {
@@ -93,23 +100,38 @@ type UserResponse struct {
 
 func (c *Client) Myself() (UserResponse, error) {
 	var user UserResponse
-	if err := c.get("/myself", &user); err != nil {
+	if err := c.get("/myself", nil, &user); err != nil {
 		return UserResponse{}, err
 	}
 	return user, nil
 }
 
-type ProjectsResponse struct {
-	Projects []struct {
-		Key  string `json:"key"`
-		Name string `json:"name"`
-	} `json:"values"`
+type Project struct {
+	Key  string `json:"key"`
+	Name string `json:"name"`
 }
 
-func (c *Client) ProjectSearch() (ProjectsResponse, error) {
-	var projects ProjectsResponse
-	if err := c.get("/project/search", &projects); err != nil {
-		return ProjectsResponse{}, err
+type ProjectsPaginatedResponse struct {
+	IsLast   bool      `json:"isLast"`
+	Projects []Project `json:"values"`
+}
+
+func (c *Client) ProjectSearch() ([]Project, error) {
+	startAt := 0
+	result := make([]Project, 0)
+	var resp ProjectsPaginatedResponse
+	for {
+		vars := map[string]string{
+			"startAt": fmt.Sprintf("%d", startAt),
+		}
+		if err := c.get("/project/search", vars, &resp); err != nil {
+			return nil, err
+		}
+		result = append(result, resp.Projects...)
+		if resp.IsLast {
+			break
+		}
+		startAt += len(resp.Projects)
 	}
-	return projects, nil
+	return result, nil
 }

@@ -35,12 +35,16 @@ func newProjectLoadingModel(client *jira.Client, project string) projectsLoading
 	}
 }
 
+type ProjectsMsg struct {
+	Projects []jira.Project
+}
+
 func (m projectsLoadingModel) getProjects() tea.Msg {
 	projects, err := m.client.ProjectSearch()
 	if err != nil {
 		return message.ResponseError{Error: err}
 	}
-	return projects
+	return ProjectsMsg{Projects: projects}
 }
 
 func (m projectsLoadingModel) Init() tea.Cmd {
@@ -59,9 +63,9 @@ func (m projectsLoadingModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case message.ResponseError:
-		return model.Error(msg.Error), tea.Quit
+		return model.Error{Err: msg.Error}, tea.Quit
 
-	case jira.ProjectsResponse:
+	case ProjectsMsg:
 		return newProjectsTableModel(msg, m.chosenProject), nil
 	}
 
@@ -80,7 +84,7 @@ type projectsTableModel struct {
 	t             table.Model
 }
 
-func newProjectsTableModel(projects jira.ProjectsResponse, chosenProject string) projectsTableModel {
+func newProjectsTableModel(projects ProjectsMsg, chosenProject string) projectsTableModel {
 	rows := make([]table.Row, len(projects.Projects))
 	cursor := -1
 
@@ -97,7 +101,7 @@ func newProjectsTableModel(projects jira.ProjectsResponse, chosenProject string)
 			{Title: "Name", Width: 15},
 		}),
 		table.WithRows(rows),
-		table.WithHeight(2),
+		table.WithHeight(1+len(projects.Projects)),
 		table.WithWidth(50),
 		table.WithFocused(true),
 	)
@@ -149,8 +153,8 @@ func (p *ProjectCmd) Run(client *jira.Client, config *config.Config) error {
 	m, err := tea.NewProgram(newProjectLoadingModel(client, config.Jira.Project)).Run()
 	if err == nil {
 		switch m := m.(type) {
-		case model.ErrorModel:
-			return fmt.Errorf("setting project error: %s", m.Error)
+		case model.Error:
+			return fmt.Errorf("setting project error: %s", m.Err)
 		case projectsTableModel:
 			config.Jira.Project = m.chosenProject
 			err = config.Save()

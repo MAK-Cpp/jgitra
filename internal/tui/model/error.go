@@ -1,25 +1,23 @@
 package model
 
-import tea "charm.land/bubbletea/v2"
+import (
+	"fmt"
 
-type ErrorModel struct {
-	Error error
+	tea "charm.land/bubbletea/v2"
+)
+
+type Error struct {
+	Err error
 }
 
-func Error(err error) ErrorModel {
-	return ErrorModel{
-		Error: err,
-	}
+func (m Error) Init() tea.Cmd {
+	panic(fmt.Sprintf("Cannot use model.Error, it's needs for returning errors from models. Error: %s", m.Err))
 }
 
-func (m ErrorModel) Init() tea.Cmd {
-	panic("Error model")
+func (m Error) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	panic(fmt.Sprintf("Cannot use model.Error, it's needs for returning errors from models. Error: %s", m.Err))
 }
 
-func (m ErrorModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	panic("Error model")
-}
-
-func (m ErrorModel) View() tea.View {
-	panic("Error model")
+func (m Error) View() tea.View {
+	panic(fmt.Sprintf("Cannot use model.Error, it's needs for returning errors from models. Error: %s", m.Err))
 }
